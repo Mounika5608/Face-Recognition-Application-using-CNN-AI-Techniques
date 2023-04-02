@@ -1,4 +1,4 @@
-## python -m PyInstaller --name MegaMold_Time_Management_Application --icon ..\mmi.ico ..\test01.py
+## python -m PyInstaller --name Time_Management_Application --icon ..\mmi.ico ..\test01.py
 
 from kivymd.uix.label import MDLabel
 from kivymd.uix.screen import MDScreen
@@ -28,663 +28,20 @@ from imutils.video import VideoStream
 from keras.utils import img_to_array
 from keras.models import load_model
 import pickle
-from scipy.spatial import distance as dist
-from imutils.video import FileVideoStream
-from imutils import face_utils
 import imutils
-import dlib
 from kivy.core.window import Window
 from kivymd.uix.dialog import MDDialog
 from kivy.metrics import dp
 from kivymd.uix.button import MDFlatButton
 import threading
+#import Service as IPL_Servcie
+import xml.etree.ElementTree as gfg 
 
-
-kv = """
-
-SM:
-    HomeScreen:
-    RegistrationScreen:
-    FaceEncodingInputScreen:
-    LoginScreen:
-    OperationsScreen:
-    EnterTimeScreen:
-    ETConfirmationScreen:
-    LastScreen:
-
-<HomeScreen>:
-    canvas.before:
-        Color: 
-            rgba: (1,1,1,1)
-        Rectangle:
-            pos: self.pos
-            size: self.size
-    name: "home"
-    GridLayout:
-        cols:1
-        pos_hint: {"center_x": 0.5, "center_y": 0.5}
-        MDLabel:
-            text: "Disclaimer : This data will be used for MegaMold International Employee time Management"
-            pos_hint: 0.9, 0.1
-            size_hint: 0.1, 0.1
-            halign: 'center'
-            font_size: 10
-            bold: True
-            italic: True
-        IncrediblyCrudeClock:
-            font_size: 25
-            bold: True
-            background_color: (1,1,1,.9)
-            halign: 'center'
-            canvas.before:
-                Color:
-                    rgba: self.background_color
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-            pos_hint: 0.9, 0.1
-            size_hint: 0.2, 0.2
-        Image:
-            source: 'Picture.png'
-            size_hint_x: 0.5
-            allow_stretch: True    
-        MDRectangleFlatIconButton:
-            icon: "login"
-            text: " Login "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            on_release:
-                app.root.current = "FR"
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"
-        MDRectangleFlatIconButton:
-            icon: "account"
-            text: " Register "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            on_release:
-                app.root.current = "reg"
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"
-
-<RegistrationScreen>:
-    canvas.before:
-        Color: 
-            rgba: (1,1,1,1)
-        Rectangle:
-            pos: self.pos
-            size: self.size
-    name: "reg"
-    GridLayout:
-        cols:1
-        pos_hint: {"center_x": 0.5, "center_y": 0.5}
-        MDLabel:
-            text: "Disclaimer : This data will be used for MegaMold International Employee time Management"
-            pos_hint: 0.9, 0.1
-            size_hint: 0.2, 0.2
-            halign: 'center'
-            font_size: 12
-            bold: True
-            italic: True
-        IncrediblyCrudeClock:
-            font_size: 30
-            bold: True
-            background_color: (1,1,1,.8)
-            halign: 'center'
-            canvas.before:
-                Color:
-                    rgba: self.background_color
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-            pos_hint: 0.9, 0.1
-            size_hint: 0.2, 0.2
-        Image:
-            source: 'Picture.png'
-            size_hint_x: 0.4
-            allow_stretch: True 
-        MDLabel:
-            id: label_name
-            text: "Employee Name:"
-            size_hint: 0.2, 0.2
-            halign: 'center'
-            font_size: 30
-            bold: True
-            italic: True
-        MDTextField:
-            id: empname
-            hint_text_color: 'black'
-            hint_text: "Please enter Full Name"
-            mode: "fill"
-            fill_color: 0, 0, 0, .4
-            icon_right: "counter"
-            text_color: 'black'
-            bold: True
-            required: True
-            size_hint: 0.4, 0.4
-            multiline: False
-            width: 200
-            font_size: 18
-            pos_hint: {"center_x": 0.5}
-            pos_hint: {"center_y": 0.5}  
-        MDLabel:
-            text: "Employee ID:"
-            size_hint: 0.2, 0.2
-            halign: 'center'
-            font_size: 30
-            bold: True
-            italic: True
-        MDTextField:
-            id: empid
-            hint_text_color: 'black'
-            hint_text: "Please enter Employee ID"
-            mode: "fill"
-            fill_color: 0, 0, 0, .4
-            icon_right: "counter"
-            text_color: 'black'
-            bold: True
-            required: True
-            size_hint: 0.4, 0.4
-            multiline: False
-            input_filter: 'int'
-            width: 200
-            font_size: 18
-            pos_hint: {"center_x": 0.5}
-            pos_hint: {"center_y": 0.5} 
-        MDRectangleFlatIconButton:
-            id: reg_but
-            icon: "account-plus"
-            text: " Continue to capture Face encodings "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            on_release:
-                app.root.current = "FIS"
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"    
-        MDRectangleFlatIconButton:
-            icon: "exit-run"
-            text: " Go Back "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"
-            on_release:
-                app.root.current = "last"
-                root.manager.transition.direction = "right"
-
-<FaceEncodingInputScreen>:
-    canvas.before:
-        Color: 
-            rgba: (1,1,1,1)
-        Rectangle:
-            pos: self.pos
-            size: self.size
-    name: "FIS"
-    GridLayout:
-        cols:1
-        pos_hint: {"center_x": 0.5, "center_y": 0.5}
-        MDLabel:
-            text: "Disclaimer : This data will be used for MegaMold International Employee time Management"
-            pos_hint: 0.9, 0.1
-            size_hint: 0.2, 0.2
-            halign: 'center'
-            font_size: 12
-            bold: True
-            italic: True
-        IncrediblyCrudeClock:
-            font_size: 30
-            bold: True
-            background_color: (1,1,1,.8)
-            halign: 'center'
-            canvas.before:
-                Color:
-                    rgba: self.background_color
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-            pos_hint: 0.9, 0.1
-            size_hint: 0.2, 0.2   
-        MDLabel:
-            text: "Instructions: Please Capture an Still Image facing towards the camera"
-            pos_hint: 0.9, 0.1
-            size_hint: 0.2, 0.2
-            halign: 'center'
-            font_size: 12
-            bold: True
-            italic: True
-        Image:
-            id: video_FIS
-            size_hint: 0.9, 0.9
-            halign: 'center'
-            allow_stretch: True  
-        MDRectangleFlatIconButton:
-            id: FIS_but
-            icon: "camera-gopro"
-            text: " Capture Face Encodings "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            on_release:
-                app.root.current = "home"
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"    
-        MDRectangleFlatIconButton:
-            icon: "exit-run"
-            text: " Go Back "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"
-            on_press: root.on_stop()
-            on_release:
-                app.root.current = "last"
-                root.manager.transition.direction = "right" 
-
-<LoginScreen>:
-    name: "FR"
-    canvas.before:
-        Color: 
-            rgba: (1,1,1,1)
-        Rectangle:
-            pos: self.pos
-            size: self.size
-    GridLayout:
-        cols:1
-        pos_hint: {"center_x": 0.5, "center_y": 0.5}
-        IncrediblyCrudeClock:
-            font_size: 30
-            bold: True
-            background_color: (1,1,1,.9)
-            halign: 'center'
-            canvas.before:
-                Color:
-                    rgba: self.background_color
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-            pos_hint: 0.9, 0.1
-            size_hint: 0.1, 0.1    
-        MDLabel:
-            text: "Instructions: Kindly Be Stationary and face towards the Camera"
-            pos_hint: 0.9, 0.1
-            size_hint: 0.1, 0.1
-            halign: 'center'
-            font_size: 12
-            bold: True
-            italic: True
-        Image:
-            id: video
-            size_hint: 0.9, 0.9
-            halign: 'center'
-            allow_stretch: True
-
-<OperationsScreen>:
-    name: "OP"
-    canvas.before:
-        Color: 
-            rgba: (1,1,1,1)
-        Rectangle:
-            pos: self.pos
-            size: self.size
-    GridLayout:
-        cols:1
-        pos_hint: {"center_x": 0.5, "center_y": 0.5}
-        IncrediblyCrudeClock:
-            font_size: 30
-            bold: True
-            background_color: (1,1,1,.9)
-            halign: 'center'
-            canvas.before:
-                Color:
-                    rgba: self.background_color
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-            pos_hint: 0.9, 0.1
-            size_hint: 0.1, 0.1
-        Image:
-            source: 'Picture.png'
-            size_hint_x: 0.5
-            allow_stretch: True    
-        MDRectangleFlatIconButton:
-            icon: "clock-check-outline"
-            text: " Clock IN "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            # on_press: root.on_leave_CI()
-            on_release:
-                app.root.current = "last"
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"   
-        MDRectangleFlatIconButton:
-            icon: "clock-fast"
-            text: " Clock Out "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            # on_press: root.on_leave_CI()
-            on_release:
-                app.root.current = "last"
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"   
-        MDRectangleFlatIconButton:
-            icon: "timetable"
-            text: " Enter Time "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            on_release:
-                app.root.current = "ET"
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"    
-        MDRectangleFlatIconButton:
-            icon: "exit-run"
-            text: " Go Back "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"
-            on_release:
-                app.root.current = "last"
-                root.manager.transition.direction = "right"
-
-#:import Factory kivy.factory.Factory
-
-<MySpinnerOption@SpinnerOption>:
-    background_color: '#4169E1'
-    background_down: ''       
-
-<EnterTimeScreen>:
-    name: "ET"
-    canvas.before:
-        Color:
-            rgba: (191,205,214,1)
-        Rectangle:
-            pos: self.pos
-            size: self.size
-    GridLayout:
-        cols:1
-        pos_hint: {"center_x": 0.5, "center_y": 0.5}
-        IncrediblyCrudeClock:
-            font_size: 30
-            bold: True
-            background_color: (1,1,1,.9)
-            halign: 'center'
-            canvas.before:
-                Color:
-                    rgba: self.background_color
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-            pos_hint: 0.9, 0.1
-            size_hint: 0.2, 0.2
-        Image:
-            source: 'Picture.png'
-            size_hint_x: 0.4
-            allow_stretch: True   
-        MDLabel:
-            id: jobnum_label
-            text: "Job Number:"
-            size_hint: 0.2, 0.2
-            halign: 'center'
-            font_size: 30
-            bold: True
-            italic: True
-        MDTextField:
-            id: job_num
-            hint_text_color: 'black'
-            hint_text: "Please enter valid Job Number"
-            mode: "fill"
-            fill_color: 0, 0, 0, .4
-            icon_right: "counter"
-            text_color: 'black'
-            bold: True
-            required: True
-            size_hint: 0.4, 0.4
-            multiline: False
-            input_filter: 'float'
-            width: 200
-            font_size: 18
-            pos_hint: {"center_x": 0.5}
-            pos_hint: {"center_y": 0.5}
-        MDLabel:
-            id: op_num
-            text: "Please Select Operation Name:"
-            size_hint: 0.4, 0.4
-            halign: 'center'
-            font_size: 30
-            bold: True
-            italic: True  
-        Spinner:
-            background_color: '#4169E1'
-            id: spinner_id
-            text: "Operation Selected : None"
-            color: '#4169E1'
-            size_hint: 0.3, 0.3
-            option_cls: Factory.get("MySpinnerOption")
-            values: [" 3 - Design [Engineering Department] ", " 5 - 3D Machining [ CNC Department ] ", " 6 - 2D Machining [ CNC Department ] ", " 7 - Radial Drill/Boring Mill [ CNC Department ] ", " 60 - GunDrill [ CNC Department ] ", " 10 - Quality Control [ Inspection ] ", " 11 - Trucking [ Trucking Department ] ", " 59 - Freight [ Trucking Department ] ", " 20 - Mold Making [ Mold Making ] ", " 24 - Spotting [ Mold Making ] ", " 23 - EDM ", " 40 - Shop Maintenance [ Indirect Labour ] "," 41 - Computer Maintenance [ Indirect Labour ] "," 42 - Training [ Indirect Labour ] "," 43 - Machine Repair [ Indirect Labour ] "," 44 - Indirect [ Indirect Labour ] "," 45 - Janitorial [ Indirect Labour ] "]
-            on_text: root.spinner_clicked(spinner_id.text)
-        MDTextField:
-            id: time_work
-            hint_text: "Please enter the time for the operation in Hours. Eg: 1.5 means 1 hour and 30 minutes"
-            mode: "fill"
-            fill_color: 0, 0, 0, .4
-            icon_right: "timer-plus-outline"
-            bold: True
-            required: True
-            size_hint: 0.4, 0.4
-            multiline: False
-            input_filter: 'float'
-            width: 200
-            font_size: 18
-            pos_hint: {"center_x": 0.5}
-            pos_hint: {"center_y": 0.5}
-        MDRectangleFlatIconButton:
-            id: et_but
-            icon: "tag-arrow-up-outline"
-            text: " Add Work Entry "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            # on_press:root.ET()
-            on_release:
-                app.root.current = "ETC"
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"
-        MDRectangleFlatIconButton:
-            icon: "exit-run"
-            text: " Go Back "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"
-            on_release:
-                app.root.current = "last"
-                root.manager.transition.direction = "right"
-
-<ETConfirmationScreen>:
-    name: "ETC"
-    canvas.before:
-        Color:
-            rgba: (191,205,214,1)
-        Rectangle:
-            pos: self.pos
-            size: self.size
-    GridLayout:
-        cols:1
-        pos_hint: {"center_x": 0.5, "center_y": 0.5}
-        IncrediblyCrudeClock:
-            font_size: 30
-            bold: True
-            background_color: (1,1,1,.9)
-            halign: 'center'
-            canvas.before:
-                Color:
-                    rgba: self.background_color
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-            pos_hint: 0.9, 0.1
-            size_hint: 0.5, 0.5
-        Image:
-            source: 'Picture.png'
-            size_hint_x: 0.5
-            allow_stretch: True    
-        MDRectangleFlatIconButton:
-            # id: et_but
-            icon: "pen-plus"
-            text: " Thank you, Make Another Work Entry "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.6)
-            bold: True
-            background_color: '#4169E1'
-            on_release:
-                app.root.current = "ET"
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"   
-        MDRectangleFlatIconButton:
-            icon: "exit-run"
-            text: " Go Back "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"
-            # on_press: root.stop()
-            on_release:
-                app.root.current = "last"
-                root.manager.transition.direction = "right"
-<LastScreen>:
-    name: "last"
-    canvas.before:
-        Color:
-            rgba: (191,205,214,1)
-        Rectangle:
-            pos: self.pos
-            size: self.size
-    GridLayout:
-        cols:1
-        pos_hint: {"center_x": 0.5, "center_y": 0.5}
-        IncrediblyCrudeClock:
-            font_size: 30
-            bold: True
-            background_color: (1,1,1,.9)
-            halign: 'center'
-            canvas.before:
-                Color:
-                    rgba: self.background_color
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-            pos_hint: 0.9, 0.1
-            size_hint: 0.5, 0.5
-        Image:
-            source: 'Picture.png'
-            size_hint_x: 0.5
-            allow_stretch: True    
-        MDRectangleFlatIconButton:
-            icon: "archive-check-outline"
-            text: " Thank you "
-            font_size: "40sp"
-            md_bg_color: '#4169E1'
-            text_size: 20
-            size_hint: (1,0.3)
-            bold: True
-            background_color: '#4169E1'
-            theme_text_color: "Custom"
-            text_color: "white"
-            line_color: "green"
-            icon_color: "white"
-            on_release:
-                app.root.current = "home"
-                root.manager.transition.direction = "right"
-"""
-
-detector1 = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-prototxt = 'face_detector/deploy.prototxt'
-caffemodel = 'face_detector/res10_300x300_ssd_iter_140000.caffemodel'
+prototxt = './deploy.prototxt'
+caffemodel = './res10_300x300_ssd_iter_140000.caffemodel'
 net = cv2.dnn.readNetFromCaffe(prototxt, caffemodel)
 model = load_model('liveness.model')
 le = pickle.loads(open('le.pickle', "rb").read())
-
 
 def findEncodings(images):
     encodeList = []
@@ -694,21 +51,14 @@ def findEncodings(images):
         encodeList.append(encode)
     return encodeList
 
-
 class SM(ScreenManager):
     pass
-
-
 class HomeScreen(MDScreen):
     pass
-
-
 class RegistrationScreen(MDScreen):
     def on_enter(self, *args):
         self.ids.empname.text = ""
         self.ids.empid.text = ""
-
-
 
 class FaceEncodingInputScreen(MDScreen):
     def __init__(self, **kwargs):
@@ -719,8 +69,8 @@ class FaceEncodingInputScreen(MDScreen):
 
     def on_enter(self, *args):
         self.ids.FIS_but.bind(on_press=self.callback)
-        self.capture = cv2.VideoCapture(0)
-        Clock.schedule_interval(self.update, 1.0 / 30.0)
+        self.capture = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        Clock.schedule_interval(self.update, 1.0 / 15.0)
         return self.image
 
     def update(self, dt):
@@ -736,11 +86,11 @@ class FaceEncodingInputScreen(MDScreen):
         global EID
         select_screen = self.manager.get_screen("reg")
         EID = select_screen.ids.empid.text
-        EN = select_screen.ids.empname.text
-        self.cap = cv2.VideoCapture(0)
+        EN = select_screen.ids.empname.text        
+        self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         ret, frame = self.cap.read()
         if ret:
-            cv2.imwrite("ImagesAttendance/{}.png".format(EN), frame)
+            cv2.imwrite("Face_Directory/{}.png".format(EN), frame)
             self.cap.release()
             Clock.unschedule(self.update)
             self.success_dialog = MDDialog(title="Registration Successful",
@@ -751,6 +101,9 @@ class FaceEncodingInputScreen(MDScreen):
             sm = MDApp.get_running_app().root
             FR_Ref = sm.get_screen("FR")
             FR_Ref.Encoding_Reload_Prompt = True
+            my_list = [EID, EN, " "]
+            my_string = ','.join(my_list)
+            #IPL_Servcie.service.User_Master('SP_Insert_User_Master',my_string)
         else:
             print("Failed to capture image")
 
@@ -764,7 +117,6 @@ class FaceEncodingInputScreen(MDScreen):
 
     def on_stop(self):
         self.capture.release()
-        self.cap.release()
         Clock.unschedule(self.update)
         cv2.destroyAllWindows()
 
@@ -773,27 +125,28 @@ class FaceEncodingInputScreen(MDScreen):
 
 
 class LoginScreen(MDScreen):
-    # COUNTER = False
     def Go_Home(self, *args):
         self.manager.current = "home"
+        self.capture.release()
+        Clock.unschedule(self.update)
+        Clock.unschedule(self.Go_Home)
         self.on_stop()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # self.COUNTER = True
         self.classNames = []
         self.encodeListKnown = []
         self.load_images()
         self.capture = None
         self.Encoding_Reload_Prompt = False
         self.spoof_dialog = None
-        # self.Spoof_Counter = 0
-        # self.Unidentified_Counter = 0
-        # self.capture = cv2.VideoCapture(0)
+        self.Login_Success_dialog = None
         self.image = Image()
 
     def load_images(self):
-        path = '.\ImagesAttendance'
+        path = './Face_Directory'
+        self.classNames = []
+        self.encodeListKnown = []
         images = []
         myList = os.listdir(path)
         for cl in myList:
@@ -804,13 +157,9 @@ class LoginScreen(MDScreen):
 
     def on_enter(self, *args):
         global Encoding_Reload_Prompt
-        # self.ids.pro_but.disabled = True
-        # self.COUNTER = True
-        self.capture = cv2.VideoCapture(0)
-        Clock.schedule_interval(self.update, 1.0 / 30.0)
+        self.capture = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        Clock.schedule_interval(self.update, 1.0 / 15.0)
         Clock.schedule_interval(self.Go_Home,20)
-        # self.Spoof_Counter = 0
-        # self.Unidentified_Counter = 0
         if self.Encoding_Reload_Prompt == True:
             self.load_images()
             self.Encoding_Reload_Prompt = False
@@ -822,7 +171,7 @@ class LoginScreen(MDScreen):
             buffer = cv2.flip(frame, 0).tobytes()
             texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
             texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
-            self.ids.video.texture = texture  # id video is defined in kv
+            self.ids.video.texture = texture
             frame = imutils.resize(frame, width=600)
             (h, w) = frame.shape[:2]
             blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0,
@@ -854,7 +203,7 @@ class LoginScreen(MDScreen):
                         encodesCurFrame = face_recognition.face_encodings(frame, facesCurFrame)
                         rects = net.forward()
                         for encodeFace, faceLoc in zip(encodesCurFrame, facesCurFrame):
-                            matches = face_recognition.compare_faces(self.encodeListKnown, encodeFace, tolerance=0.45)
+                            matches = face_recognition.compare_faces(self.encodeListKnown, encodeFace, tolerance=0.4)
                             faceDis = face_recognition.face_distance(self.encodeListKnown, encodeFace)
                             matchIndex = np.argmin(faceDis)
 
@@ -874,16 +223,21 @@ class LoginScreen(MDScreen):
                                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                                 cv2.rectangle(frame, (startX, startY), (endX, endY),
                                               (0, 255, 0), 2)
-                                # self.ids.pro_but.disabled = False
+                                self.Login_Success_dialog = MDDialog(title="Welcome " + name,
+                                                             text=" Please Press the Proceed Button to Continue to Time Entries ",
+                                                             size_hint=(.8, None), height=dp(300),
+                                                             buttons=[MDFlatButton(text=" Proceed ",
+                                                                                   on_release=self.change_screen_Login_Success_dialog)])
+                                self.Login_Success_dialog.open()
                                 self.manager.current = "OP"
                                 self.on_stop()
+                                global name_db
+                                name_db = name
                     else:
-                        # current_time = time.asctime()
                         current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                        file_name = "C:/Users/Research/PycharmProjects/MMI_Test06/Spoof_Attacks/" + f"{current_time}.png"
-                        if not os.path.exists("C:/Users/Research/PycharmProjects/MMI_Test07/Spoof_Attacks/"):
-                            os.makedirs("C:/Users/Research/PycharmProjects/MMI_Test07/Spoof_Attacks/")
-                        print(file_name)
+                        file_name = "Spoof_Attacks/" + f"{current_time}.png"
+                        if not os.path.exists("./Spoof_Attacks"):
+                            os.makedirs("./Spoof_Attacks")
                         cv2.imwrite(file_name, frame)
                         self.spoof_dialog = MDDialog(title="SPOOF ATTACK ALERT!!!",
                                                        text="Please Do not try to spoof the system. This instance has been recorded",
@@ -899,6 +253,12 @@ class LoginScreen(MDScreen):
     def change_screen_Spoof(self, instance):
         self.spoof_dialog.dismiss()
 
+    def change_screen_Login_Success_dialog(self, instance):
+        self.Login_Success_dialog.dismiss()
+        self.capture.release()
+        Clock.unschedule(self.update)
+        Clock.unschedule(self.Go_Home)
+
     def on_stop(self):
         self.capture.release()
         Clock.unschedule(self.update)
@@ -909,40 +269,305 @@ class LoginScreen(MDScreen):
         Clock.unschedule(self.update)
         Clock.unschedule(self.Go_Home)
 
-
 class OperationsScreen(Screen):
-    pass
+    dialog_label_clock_in = None
+    dialog_label_clock_out = None
+    dialog = None
 
+    def show_dialog_box_clock_in(self):
+        Clock.schedule_once(self.create_dialog_box_clock_in, 0)
+
+    def create_dialog_box_clock_in(self, dt):
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")
+        self.dialog = MDDialog(  # Store dialog instance as attribute
+            title="Clock In",
+            type="custom",
+            size_hint=(.8, None), height=dp(300),
+            content_cls=MDLabel(
+                text=f"Are you sure you want to clock in at {current_time}?",
+                theme_text_color="Custom",
+                text_color=(0, 0, 0, 1),
+                font_style='H6'
+            ),
+            buttons=[
+                MDFlatButton(
+                    text="Cancel", font_style='H6', on_release=lambda x: self.dialog.dismiss(),
+                ),
+                MDFlatButton(            
+                    self.on_leave_CI(),text="Clock In", font_style='H6', on_release=lambda x: self.clock_in()
+                    
+                 
+                ),
+            ],
+        )
+        self.dialog.open()
+
+    def show_dialog_box_clock_out(self):
+        Clock.schedule_once(self.create_dialog_box_clock_out, 0)
+
+    def create_dialog_box_clock_out(self, dt):
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")
+        self.dialog = MDDialog(
+            title="Clock Out",
+            type="custom",
+            size_hint=(.8, None), height=dp(300),
+            content_cls=MDLabel(
+                text=f"Are you sure you want to clock out at {current_time}?",
+                theme_text_color="Custom",
+                text_color=(0, 0, 0, 1),
+                font_style='H6'
+            ),
+            buttons=[
+                MDFlatButton(
+                    text="Cancel",font_style='H6', on_release=lambda x: self.dialog.dismiss()
+                ),
+                MDFlatButton(
+                    self.on_leave_CO(),text="Clock Out", font_style='H6', on_release=lambda x: self.clock_out()
+                ),
+            ],
+        )
+        self.dialog.open()
+
+    def clock_in(self):
+        self.dialog.dismiss()
+        self.manager.current = "last"
+
+    def clock_out(self):
+        self.dialog.dismiss()
+        self.manager.current = "last"
+
+    def on_leave_CI(self, *args):
+       
+        Var=name_db
+        my_list = [Var,'1']
+        my_string = ','.join(my_list)
+        #IPL_Servcie.service.Clock_IN_Out('SP_Insert_CLock_IN_OUT',my_string)
+
+    def on_leave_CO(self, *args):
+        Var=name_db
+        my_list = [Var,'0']
+        my_string = ','.join(my_list)
+        #IPL_Servcie.service.Clock_IN_Out('SP_Insert_CLock_IN_OUT',my_string)
+
+
+  
+  
+
+def GenerateXML(self,fileName) :
+
+    global root 
+    root = gfg.Element("NewDataSet")
+      
+    # m1 = gfg.Element("Table")
+    # root.append(m1)
+
+    for i in range(11-1): 
+
+        job='job_num'+str(i+1)
+        Operation_No='spinner_id'+str(i+1)
+        Time_Work='time_work'+str(i+1)
+
+        # global root 
+        # root = gfg.Element("NewDataSet")
+      
+        m1 = gfg.Element("Table")
+        root.append(m1)
+        
+        b1 = gfg.SubElement(m1, "Job_Num")
+        b1.text = self.ids[str(job)].text
+
+        b2 = gfg.SubElement(m1, "Operation_No")
+        b2.text = self.ids[str(Operation_No)].text
+                    
+        c1 = gfg.SubElement(m1, "Time_Work")
+        c1.text = self.ids[str(Time_Work)].text
+
+        tree = gfg.ElementTree(root)
+        with open (fileName, "wb") as files :
+            tree.write(files)
+            
+    global XML
+    XML=gfg.tostring(root).decode()     
+
+    return XML  
+        
+        
+    
+        
+          
 
 class EnterTimeScreen(MDScreen):
-    def spinner_clicked(self, value):
-        self.ids.op_num.text = f' Operation Selected : {value}'
 
-    def on_leave(self, *args):
-        self.ids.job_num.text = ""
-        self.ids.op_num.text = 'No Operation Selected'
-        self.ids.time_work.text = ""
+    def ET(self):
+        Job_No=self.ids.job_num.text
+        OP_No=self.ids.spinner_id.text
+        Time_Work=self.ids.result_label.text
+        Var=name_db
+        print(Job_No,OP_No,Time_Work)
+        Para = Job_No,OP_No,Time_Work
+        print(Para)
+        my_list = [Job_No, OP_No, Time_Work,Var]
+        my_string = ','.join(my_list)
+        #IPL_Servcie.service.Insert('SP_Insert_CLock_Master',my_string)
+
+    def calculate_sum(self, *args):
+        num_list = []
+        for i in range(1, 11):
+            if f"time_work{i}" in self.ids:
+                num_text = self.ids[f"time_work{i}"].text
+                num = float(num_text) if num_text else 0.0
+                num_list.append(num)
+        result = sum(num_list)
+        rounded_result = round(result, 2)
+        self.ids.result_label.text = str(rounded_result)
+
+    def Enter_Time(self):
+        self.dialog = MDDialog(text="Confirm to submit yor Time Entries",
+                                         size_hint=(.8, None), height=dp(300),
+                                         buttons=[MDFlatButton(text="Cancel",font_style='H6', on_release=lambda x: self.dialog.dismiss()),
+                                                  MDFlatButton(text=" Proceed ",font_style='H6',
+                                                               on_release=lambda x: self.change_last())
+                                          ])
+       
+       
+        
+        XML_NEW=GenerateXML(self,"Catalog.xml")
+        Var=name_db
+        my_list = [Var,XML_NEW]
+        my_string = ','.join(my_list)
+        #IPL_Servcie.service.Insert('SP_Insert_Master_DATA',my_string)
+        # jobnumber=self.ids[str(jon)].text
+        
+       
+        self.dialog.open()
+
+    def change_last(self):
+        self.dialog.dismiss()
+        self.manager.current = "last"
+
+    def submit_add_job_entries(self):
+        self.ids.job_num1.text = ""
+        self.ids.spinner_id1.text = ""
+        self.ids.time_work1.text = ""
+
+        self.ids.job_num2.text = ""
+        self.ids.spinner_id2.text = ""
+        self.ids.time_work2.text = ""
+
+        self.ids.job_num3.text = ""
+        self.ids.spinner_id3.text = ""
+        self.ids.time_work3.text = ""
+
+        self.ids.job_num4.text = ""
+        self.ids.spinner_id4.text = ""
+        self.ids.time_work4.text = ""
+
+        self.ids.job_num5.text = ""
+        self.ids.spinner_id5.text = ""
+        self.ids.time_work5.text = ""
+
+        self.ids.job_num6.text = ""
+        self.ids.spinner_id6.text = ""
+        self.ids.time_work6.text = ""
+
+        self.ids.job_num7.text = ""
+        self.ids.spinner_id7.text = ""
+        self.ids.time_work7.text = ""
+
+        self.ids.job_num8.text = ""
+        self.ids.spinner_id8.text = ""
+        self.ids.time_work8.text = ""
+
+        self.ids.job_num9.text = ""
+        self.ids.spinner_id9.text = ""
+        self.ids.time_work9.text = ""
+
+        self.ids.job_num10.text = ""
+        self.ids.spinner_id10.text = ""
+        self.ids.time_work10.text = ""
+
+        self.ids.job_num11.text = ""
+        self.ids.spinner_id11.text = ""
+        self.ids.time_work11.text = ""
+
+    def on_enter(self):
+        self.ids.job_num1.text = ""
+        self.ids.spinner_id1.text = ""
+        self.ids.time_work1.text = ""
+
+        self.ids.job_num2.text = ""
+        self.ids.spinner_id2.text = ""
+        self.ids.time_work2.text = ""
+
+        self.ids.job_num3.text = ""
+        self.ids.spinner_id3.text = ""
+        self.ids.time_work3.text = ""
+
+        self.ids.job_num4.text = ""
+        self.ids.spinner_id4.text = ""
+        self.ids.time_work4.text = ""
+
+        self.ids.job_num5.text = ""
+        self.ids.spinner_id5.text = ""
+        self.ids.time_work5.text = ""
+
+        self.ids.job_num6.text = ""
+        self.ids.spinner_id6.text = ""
+        self.ids.time_work6.text = ""
+
+        self.ids.job_num7.text = ""
+        self.ids.spinner_id7.text = ""
+        self.ids.time_work7.text = ""
+
+        self.ids.job_num8.text = ""
+        self.ids.spinner_id8.text = ""
+        self.ids.time_work8.text = ""
+
+        self.ids.job_num9.text = ""
+        self.ids.spinner_id9.text = ""
+        self.ids.time_work9.text = ""
+
+        self.ids.job_num10.text = ""
+        self.ids.spinner_id10.text = ""
+        self.ids.time_work10.text = ""
+
+        self.ids.job_num11.text = ""
+        self.ids.spinner_id11.text = ""
+        self.ids.time_work11.text = ""
 
 
-class ETConfirmationScreen(Screen):
-    pass
 class LastScreen(Screen):
+    def on_enter(self):
+        Clock.schedule_once(self.timeout, 3)
+
+    def timeout(self, dt):
+        self.manager.current = 'home'
+
+    def on_stop(self):
+        pass
+
+class ContentNavigationDrawer(BoxLayout):
     pass
 class IncrediblyCrudeClock(MDLabel):
     def __init__(self, **kwargs):
         super(IncrediblyCrudeClock, self).__init__(**kwargs)
         Clock.schedule_interval(self.update, 1)
+
     def update(self, *args):
-        self.text = time.asctime()
+        now = datetime.datetime.now()
+        date_str = now.strftime("%A, %B %d, %Y")
+        time_str = now.strftime("%I:%M:%S %p")
+        self.text = f"{date_str}\n{time_str}"
+
 
 class MMI(MDApp):
     def build(self):
-        Window.set_title("COMPANY NAME")
-        Window.icon = "mmi.ico"
+        Window.set_title("XYZ Company Application")
         Window.unbind(on_request_close=self.stop)
-        Window.borderless = True
-        Window.fullscreen = True
-        return Builder.load_string(kv)
+        # Window.borderless = True
+        # Window.fullscreen = True
+        # return Builder.load_string(kv)
+        return Builder.load_file("MMI.kv")
 
 if __name__ == "__main__":
     MMI().run()
